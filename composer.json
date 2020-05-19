@@ -1,0 +1,34 @@
+{
+    "name"             : "ampio/utility",
+    "description"      : "Utilities for Ampio components",
+    "keywords"         : [
+        "ampio",
+        "psr",
+        "psr-4",
+        "psr-12",
+        "utility"
+    ],
+    "minimum-stability": "stable",
+    "license"          : "BSD-3-Clause",
+    "authors"          : [
+        {
+            "name" : "Mikhail Erypalov",
+            "email": "mikaxxl@yandex.ru",
+            "role" : "developer"
+        }
+    ],
+    "config"           : {
+        "sort-packages"      : true,
+        "optimize-autoloader": true
+    },
+    "require"          : {
+        "php"          : "^7.4",
+        "ext-mbstring" : "*",
+        "php-ds/php-ds": "dev-master"
+    },
+    "autoload"         : {
+        "psr-4": {
+            "Ampio\\Utility\\": "src/"
+        }
+    }
+}
