@@ -1,8 +1,8 @@
 {
-    "name"             : "ampio/utility",
-    "description"      : "Utilities for Ampio components",
+    "name"             : "estasi/utility",
+    "description"      : "Utilities for Estasi components",
     "keywords"         : [
-        "ampio",
+        "estasi",
         "psr",
         "psr-4",
         "psr-12",
@@ -28,7 +28,7 @@
     },
     "autoload"         : {
         "psr-4": {
-            "Ampio\\Utility\\": "src/"
+            "Estasi\\Utility\\": "src/"
         }
     }
 }
