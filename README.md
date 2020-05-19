@@ -18,4 +18,4 @@ composer require estasi/utility
 
 
 ## License
-All contents of this package are licensed under the [BSD-3-Clause license]().
+All contents of this package are licensed under the [BSD-3-Clause license](https://github.com/estasi/utility/blob/master/LICENSE.md).
