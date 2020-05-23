@@ -12,6 +12,7 @@ use function sprintf;
  * Trait ConvertPatternHtml5ToPCRE
  *
  * @package Estasi\Utility\Traits
+ * @deprecated
  */
 trait ConvertPatternHtml5ToPCRE
 {
