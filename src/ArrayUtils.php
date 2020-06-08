@@ -6,12 +6,11 @@ namespace Estasi\Utility;
 
 use Generator;
 
+use function array_key_exists;
 use function array_shift;
 use function boolval;
 use function explode;
 use function is_iterable;
-use function is_object;
-use function method_exists;
 
 /**
  * Class ArrayUtils
@@ -66,10 +65,6 @@ abstract class ArrayUtils
      */
     public static function iteratorToArray(iterable $data, bool $useKeys = true): array
     {
-        if (is_object($data) && method_exists($data, 'toArray')) {
-            return $data->toArray();
-        }
-
         $generator = function (iterable $data) use ($useKeys): Generator {
             $i = 0;
             foreach ($data as $key => $value) {
@@ -85,5 +80,42 @@ abstract class ArrayUtils
         }
 
         return $array;
+    }
+
+    /**
+     * Returns an array converted from one-dimensional to multidimensional (if possible).
+     * The key nesting separator is the symbol "."
+     *
+     * @param iterable $data
+     *
+     * @return array
+     * @example
+     *         <pre>
+     *         $arr['bar.foo'] = 'foo';
+     *         $arr['bar.baz'] = 'baz';
+     *         print_r(ArrayUtils::oneToMultiDimArray($arr)); // Array([bar] => Array([foo] => foo, [baz] => baz))
+     *         </pre>
+     *
+     */
+    public static function oneToMultiDimArray(iterable $data): array
+    {
+        $multiDimArray          = [];
+        $convertToMultiDimArray = function (array &$multiDimArray, array $keys, $value) use (&$convertToMultiDimArray) {
+            $key = array_shift($keys);
+            if (empty($keys)) {
+                $multiDimArray[$key] = $value;
+            } else {
+                if (false === array_key_exists($key, $multiDimArray)) {
+                    $multiDimArray[$key] = [];
+                }
+                $convertToMultiDimArray($multiDimArray[$key], $keys, $value);
+            }
+        };
+
+        foreach (self::iteratorToArray($data) as $key => $value) {
+            $convertToMultiDimArray($multiDimArray, explode('.', $key), $value);
+        }
+
+        return $multiDimArray;
     }
 }
