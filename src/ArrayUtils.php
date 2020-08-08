@@ -10,7 +10,10 @@ use function array_key_exists;
 use function array_shift;
 use function boolval;
 use function explode;
+use function is_array;
 use function is_iterable;
+use function iterator_to_array;
+use function method_exists;
 
 /**
  * Class ArrayUtils
@@ -19,6 +22,55 @@ use function is_iterable;
  */
 abstract class ArrayUtils
 {
+    /**
+     * Convert shallowly an iterator to an array
+     *
+     * @param iterable $iterator
+     * @param bool     $useKeys Whether to use the iterator element keys as index
+     *
+     * @return array
+     */
+    public static function iteratorToArrayShallow(iterable $iterator, bool $useKeys = true): array
+    {
+        if (is_array($iterator)) {
+            return $iterator;
+        }
+        
+        if (method_exists($iterator, 'toArray')) {
+            return $iterator->toArray();
+        }
+        
+        /** @noinspection PhpParamsInspection */
+        return iterator_to_array($iterator, $useKeys);
+    }
+    
+    /**
+     * Convert recursively an iterator to an array
+     *
+     * @param iterable $iterator
+     * @param bool     $useKeys Whether to use the iterator element keys as index
+     *
+     * @return array
+     */
+    public static function iteratorToArrayRecursive(iterable $iterator, bool $useKeys = true): array
+    {
+        $generator = function (iterable $iterator) use ($useKeys): Generator {
+            $i = 0;
+            foreach ($iterator as $key => $value) {
+                $key   = $useKeys ? $key : $i++;
+                $value = is_iterable($value) ? self::iteratorToArrayRecursive($value, $useKeys) : $value;
+                yield $key => $value;
+            }
+        };
+        
+        $array = [];
+        foreach ($generator($iterator) as $key => $value) {
+            $array[$key] = $value;
+        }
+        
+        return $array;
+    }
+    
     /**
      * Returns the found value in the iterated object for the specified key.
      *
@@ -33,27 +85,27 @@ abstract class ArrayUtils
      */
     public static function get(string $key, iterable $haystack, $default = null)
     {
-        $haystack = self::iteratorToArray($haystack);
+        $haystack = self::iteratorToArrayRecursive($haystack);
         if (empty($key) || empty($haystack)) {
             return $default;
         }
-
+    
         if (isset($haystack[$key])) {
             return $haystack[$key];
         }
-
+    
         $find = function (array $keys, array $haystack) use (&$find) {
             $key = array_shift($keys);
             if (false === isset($haystack[$key])) {
                 return null;
             }
-
+        
             return boolval($keys) ? $find($keys, $haystack[$key]) : $haystack[$key];
         };
-
+    
         return $find(explode('.', $key), $haystack) ?? $default;
     }
-
+    
     /**
      * If the pseudo type variable iterable is an object that implements Traversable, the function copies the iterator
      * to an array
@@ -62,6 +114,7 @@ abstract class ArrayUtils
      * @param bool     $useKeys Whether to use the iterator element keys as index.
      *
      * @return array
+     * @deprecated
      */
     public static function iteratorToArray(iterable $data, bool $useKeys = true): array
     {
@@ -73,20 +126,21 @@ abstract class ArrayUtils
                 yield $key => $value;
             }
         };
-
+    
         $array = [];
         foreach ($generator($data) as $key => $value) {
             $array[$key] = $value;
         }
-
+    
         return $array;
     }
-
+    
     /**
      * Returns an array converted from one-dimensional to multidimensional (if possible).
      * The key nesting separator is the symbol "."
      *
      * @param iterable $data
+     * @param string   $delimiter
      *
      * @return array
      * @example
@@ -95,9 +149,8 @@ abstract class ArrayUtils
      *         $arr['bar.baz'] = 'baz';
      *         print_r(ArrayUtils::oneToMultiDimArray($arr)); // Array([bar] => Array([foo] => foo, [baz] => baz))
      *         </pre>
-     *
      */
-    public static function oneToMultiDimArray(iterable $data): array
+    public static function oneToMultiDimArray(iterable $data, string $delimiter = '.'): array
     {
         $multiDimArray          = [];
         $convertToMultiDimArray = function (array &$multiDimArray, array $keys, $value) use (&$convertToMultiDimArray) {
@@ -111,11 +164,11 @@ abstract class ArrayUtils
                 $convertToMultiDimArray($multiDimArray[$key], $keys, $value);
             }
         };
-
-        foreach (self::iteratorToArray($data) as $key => $value) {
-            $convertToMultiDimArray($multiDimArray, explode('.', $key), $value);
+        
+        foreach (self::iteratorToArrayShallow($data) as $key => $value) {
+            $convertToMultiDimArray($multiDimArray, explode($delimiter, (string)$key), $value);
         }
-
+        
         return $multiDimArray;
     }
 }
